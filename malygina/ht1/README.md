@@ -1,12 +1,13 @@
-tree_aligner
-============
+tree aligner hometask
+=====================
 progressive alignment tool.
 
 Input: one or multiple .fasta files with amino acid sequences
 
 Output: fasta file with gaps (now not actual fasta, string descriptions are temporarily lost)
 
-== Language, dependencies
+Language, dependencies
+----------------------
 
 Project is written in Julia language (http://julialang.org/).
 
@@ -16,8 +17,9 @@ First, open interactive Julia console, by typing 'julia', then print command (it
 Pkg.add("AddParse")
 ```
 
-== Call example (relative to directory containing this README.md file)
-
+Call example
+------------
+(relative to directory containing this README.md file)
 ```
 julia src/main.jl -s data/BLOSUM62 -c "N" tests/sequences1.faa tests/res1.faa
 ```
@@ -25,8 +27,11 @@ There should be help message with arguments and their descriptions, `-s` key cor
 
 First file should contain input protein strings, second file is there for writing down all results.
 
-== Current bottlenecks, future plans
+Current bottlenecks, future plans
+---------------------------------
 
-[ ] score function with scorematrix seems to be slow
-[ ] I didn't tested in on big datasets
-[ ] I didn't follow all Performance Tips from Julia official docs.
+- score function with scorematrix seems to be slow
+
+- I didn't tested in on big datasets
+
+- I didn't follow all Performance Tips from Julia official docs.
