@@ -1,13 +1,19 @@
 module ProfileAligner
 
-  export AlignmentMatrix, Profile, score, align, getstrings, scoreprofiles, measurequality, setScoringMatrix
+  export AlignmentMatrix, Profile,
+         score, align, getstrings, scoreprofiles,
+         measurequality, setScoringMatrix
+  import DataReader.FastaRecord, DataReader.ScoreMatrix
 
-  scoringMatrix = Dict{Char, Dict{Char, Float64}}()
+  scoringMatrix = ScoreMatrix()
 
-  setScoringMatrix(hsh :: Dict{Char, Dict{Char, Float64}}) = scoringMatrix = hsh
+  setScoringMatrix(sm :: ScoreMatrix) = scoringMatrix = sm
+
+  getScoringMatrixValue(matrix :: ScoreMatrix, i1 ::Int64, i2::Int64) = i1 > i2 ? matrix.hsh[i1][i2] : matrix.hsh[i2][i1]
 
   function getScoringMatrixValue(aa1 :: Char, aa2 :: Char)
-    haskey(scoringMatrix, aa1) && haskey(scoringMatrix[aa1], aa2) && return scoringMatrix[aa1][aa2]
+    haskey(scoringMatrix.keys, aa1) && haskey(scoringMatrix.keys, aa2) &&
+      return getScoringMatrixValue(scoringMatrix, scoringMatrix.keys[aa1], scoringMatrix.keys[aa2])
     aa1 == aa2 ? 1 : -1
   end
 
@@ -19,11 +25,15 @@ module ProfileAligner
     data :: Array{Dict{Char, T}, 1}
     stringsize :: Int
     numberofstrings :: Int
+    descriptions :: Array{ASCIIString, 1}
 
-    Profile(raw :: Array{Char, 2}) = getprofile(raw)
-    Profile(str :: String) = Profile{T}( reshape([ letter for letter in str ], length(str), 1) )
+    Profile(raw :: Array{Char, 2}, desc :: Array{ASCIIString, 1}) = getprofile(raw, desc)
+    #Profile(raw :: Array{Char, 2}, desc :: Array{String, 1}) = getprofile(raw, desc)
+    Profile(str :: ASCIIString, desc :: ASCIIString = "") = Profile{T}( reshape([ letter for letter in str ], length(str), 1), [desc] )
+    Profile{T}(record :: FastaRecord) = Profile{T}(record.sequence, record.description)
+    #function getprofile(raw :: Array{Char, 2}, descriptions :: Array{ASCIIString, 1})
 
-    function getprofile(raw::Array{Char, 2})
+    function getprofile(raw :: Array{Char, 2}, descriptions :: Array{ASCIIString, 1} = [])
       rawdata = copy(raw)
       data = Array(Dict{Char, T}, size(raw, 1))
       for row in 1 : size(raw, 1)
@@ -40,7 +50,7 @@ module ProfileAligner
           end
         end
       end
-      new(rawdata, data, size(raw, 1), size(raw, 2))
+      new(rawdata, data, size(raw, 1), size(raw, 2), descriptions)
     end
   end
 
@@ -78,7 +88,7 @@ module ProfileAligner
   get_nij{T}(profile::Profile{T}, i::Int64, aa::Char) = get(profile.data[i], aa, 0.0)
 
   # 1. define weighting schemes
-  function sequenceWeight1{T}(profile::Profile{T}, sequence::String)
+  function sequenceWeight1{T}(profile::Profile{T}, sequence::ASCIIString)
     sum([
       1.0/(get_ri(profile, i) * get_nij(profile, i, sequence[i]))
       for i in 1:length(sequence)
@@ -195,7 +205,7 @@ module ProfileAligner
     Profile{T}([
       tempmatrix[i][j]
       for i in length(indices):-1:1, j in length(tempmatrix[1]):-1:1
-    ])
+    ], append!(P.descriptions, Q.descriptions))
   end
 
   #
@@ -241,8 +251,8 @@ module ProfileAligner
   end
 
   #
-  # method returns string array for given profile
+  # method should return FastaRecord array for given profile
   #
-  getstrings{T}(P :: Profile{T}) =  [ ascii(P.rawdata[1:end, i]) for i in 1 : P.numberofstrings]
+  getstrings{T}(P :: Profile{T}) =  [ FastaRecord(P.descriptions[i], ascii(P.rawdata[1:end, i])) for i in 1 : P.numberofstrings]
 
 end

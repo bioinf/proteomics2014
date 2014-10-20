@@ -22,6 +22,9 @@ function parse_commandline()
             arg_type = String
             default = "N"
             #required = false
+        "--verbose"
+          help = "show debug messages while processing data"
+          action = :store_true
         "fasta-file"
             help = "file in .fasta format with a set of protein strings"
             required = true
@@ -41,7 +44,8 @@ function mergeFunc(p1 :: Profile{Float64}, p2 :: Profile{Float64})
   align(p1, p2)
 end
 
-strToProfiles(strings :: Vector{String}) = [Profile{Float64}(str) :: Profile{Float64} for str in strings]
+strToProfiles(strings :: Vector{FastaRecord}) = [Profile{Float64}(record.sequence, record.description) :: Profile{Float64} for record in strings]
+
 
 function main()
     parsed_args = parse_commandline()
@@ -52,7 +56,7 @@ function main()
     score_matrix_file = parsed_args["score-matrix"]
     ProfileAligner.setScoringMatrix(readMatrix(score_matrix_file))
     fasta_sequences = readSequences(input_file)
-    seq = strToProfiles([x.sequence for x in fasta_sequences])
+    seq = strToProfiles( fasta_sequences)
     result = (clustering == "N" ? NeighbourJoining(seq, scoreFunc, mergeFunc) :
       clustering == "W" ? WPGMA(seq, scoreFunc, mergeFunc) : UPGMA(seq, scoreFunc, mergeFunc) )
     writeSequences(output_file, getstrings(result))
