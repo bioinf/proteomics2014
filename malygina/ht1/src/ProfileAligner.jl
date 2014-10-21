@@ -35,13 +35,15 @@ module ProfileAligner
 
     function getprofile(raw :: Array{Char, 2}, descriptions :: Array{ASCIIString, 1} = [])
       rawdata = copy(raw)
-      data = Array(Dict{Char, T}, size(raw, 1))
-      for row in 1 : size(raw, 1)
+      size_1 = size(raw, 1)
+      size_2 = size(raw, 2)
+      data = Array(Dict{Char, T}, size_1)
+      for row in 1 : size_1
         data[row] = Dict{Char, T}()
         s = zero(T)
-        for col in 1:size(raw, 2)
+        for col in 1 : size_2
           letter = raw[row, col]
-          data[row][letter] = get!(data[row], letter, zero(T)) + 1
+          data[row][letter] = get!(data[row], letter, zero(T)) + one(T)
           s += one(T)
         end
         if s > 0
@@ -50,7 +52,7 @@ module ProfileAligner
           end
         end
       end
-      new(rawdata, data, size(raw, 1), size(raw, 2), descriptions)
+      new(rawdata, data, size_1, size_2, descriptions)
     end
   end
 
@@ -78,14 +80,13 @@ module ProfileAligner
     error("unknown direction")
   end
 
-  import Base.get
-  get{T}(profile::Profile{T}, i::Int64, aa :: Char) = get(profile.data[i], aa, zero(T))
+  get{T}(profile::Profile{T}, i::Int64, aa :: Char) = Base.get(profile.data[i], aa, zero(T))
 
   aminoacids = "ARNDCQEGHILKMFPSTWYVBZX"
 
   get_ri{T}(profile::Profile{T}, i::Int64) = length(keys(profile.data[i]))
 
-  get_nij{T}(profile::Profile{T}, i::Int64, aa::Char) = get(profile.data[i], aa, 0.0)
+  get_nij{T}(profile::Profile{T}, i::Int64, aa::Char) = Base.get(profile.data[i], aa, 0.0)
 
   # 1. define weighting schemes
   function sequenceWeight1{T}(profile::Profile{T}, sequence::ASCIIString)
@@ -120,11 +121,11 @@ module ProfileAligner
     m = Q.stringsize
     matrixdata.matrix[1, 1] = zero(T)
     matrixdata.path[1, 1] = 'U'
-    for i = 1:n
+    for i = 1 : n
       matrixdata.matrix[i + 1, 1] = matrixdata.matrix[i, 1] + GAP_COST
       matrixdata.path[i + 1, 1] = 'D'
     end
-    for j = 1:m
+    for j = 1 : m
       matrixdata.matrix[1, j + 1] = matrixdata.matrix[1, j] + GAP_COST
       matrixdata.path[1, j + 1] = 'R'
     end
@@ -138,8 +139,8 @@ module ProfileAligner
                   )
     n = P.stringsize
     m = Q.stringsize
-    for i = 1:n
-      for j = 1:m
+    for j = 1 : m
+      for i = 1 : n
         # 1. Match
         matrixdata.matrix[i + 1, j + 1] = matrixdata.matrix[i, j] + scoreFunc(P, Q, i, j)
         matrixdata.path[i + 1, j + 1] = 'M'
@@ -182,30 +183,33 @@ module ProfileAligner
     path
   end
 
-  construct{T}(a1::Array{T}, a2::Array{T}) = hcat(a1, a2)
+  construct{T}(a1 :: Array{T}, a2 :: Array{T}) = hcat(a1, a2)
 
   function mixprofilecolumn{T}(P :: Profile{T}, Q :: Profile{T},
                                  direction :: Char, i :: Int64, j :: Int64)
     direction == 'M' && return construct(P.rawdata[i, 1:end], Q.rawdata[j, 1:end])
     direction == 'R' && return construct(reshape(['-' for k in 1 : P.numberofstrings], 1, P.numberofstrings),
-              Q.rawdata[j, 1:end])
+              Q.rawdata[j, 1 : end])
     direction == 'D' && return construct(
-              P.rawdata[i, 1:end],
+              P.rawdata[i, 1 : end],
               reshape(['-' for k in 1 : Q.numberofstrings], 1, Q.numberofstrings)
               )
     error("unknown direction in mix profile column")
   end
 
-  function mixprofiles{T}(P :: Profile{T}, Q :: Profile{T}, indices::Vector{(Char, Int64, Int64)})
-    tempmatrix = [
-      mixprofilecolumn(P, Q, indices[index][1], indices[index][2], indices[index][3])
-      for index in 1 : length(indices)
-    ]
-    debugprint(tempmatrix)
-    Profile{T}([
-      tempmatrix[i][j]
-      for i in length(indices):-1:1, j in length(tempmatrix[1]):-1:1
-    ], append!(P.descriptions, Q.descriptions))
+  function mixprofiles{T}(P :: Profile{T}, Q :: Profile{T}, indices :: Vector{(Char, Int64, Int64)})
+
+    newProfileSize = length(indices)
+    tempMatrix = Array(Char, newProfileSize, P.numberofstrings + Q.numberofstrings)
+    for index in  1 : newProfileSize
+      newProfileColumn = mixprofilecolumn(P, Q,
+          indices[index][1], indices[index][2], indices[index][3])
+      for j in 1 : length(newProfileColumn)
+        tempMatrix[newProfileSize - index + 1, j] = newProfileColumn[j]
+      end
+    end
+
+    Profile{T}(tempMatrix, append!(P.descriptions, Q.descriptions))
   end
 
   #
@@ -245,7 +249,7 @@ module ProfileAligner
   #
   function measurequality{T}(P :: Profile{T})
     sum([
-      sum([- get(P.data[i], aa, zero(T))*log2(get(P.data[i], aa, one(T)))
+      sum([- Base.get(P.data[i], aa, zero(T))*log2(Base.get(P.data[i], aa, one(T)))
         for aa in setdiff(keys(P.data[i]), '-')])
       for i in 1 : P.stringsize])
   end
