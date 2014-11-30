@@ -29,6 +29,11 @@ public class PdbUtils
         return Calc.add(n, u);
     }
 
+    /**
+     * Clears bond structure
+     * @param structure structure to clear
+     * @return amount of deleted bonds
+     */
     public static int RemoveExistingBonds(Structure structure)
     {
         int bonds_removed = 0;
@@ -45,47 +50,14 @@ public class PdbUtils
         return bonds_removed / 2;
     }
 
-//    public static int CalculateHydrogenBonds(Structure structure) throws StructureException
-//    {
-//        int bonds_created = 0;
-//        for (Chain chain : structure.getChains())
-//        {
-//            List<Group> groups = chain.getAtomGroups("amino");
-//            for (int i = 0; i < groups.size(); ++i)
-//            {
-//                for (int j = i + 1; j < groups.size(); ++j)
-//                {
-//                    AminoAcid first = (AminoAcid) groups.get(i);
-//                    AminoAcid previous = (AminoAcid) groups.get(j - 1);
-//                    AminoAcid second = (AminoAcid) groups.get(j);
-//
-////                    if (previous.getC() == null || second.getCA() == null)
-////                    {
-////                        System.out.print("");
-////                    }
-//
-//                    Atom hydrogen = CalculateHydrogenPosition(previous.getC(), second.getN(), second.getCA());
-//
-//                    double ron = Calc.getDistance(first.getO(), second.getN());
-//                    double rch = Calc.getDistance(first.getC(), hydrogen);
-//                    double roh = Calc.getDistance(first.getO(), hydrogen);
-//                    double rcn = Calc.getDistance(first.getC(), second.getN());
-//
-//                    // magic consts - http://en.wikipedia.org/wiki/DSSP_(protein)
-//                    double interaction_energy = 0.084 * 332 * (1 / ron + 1 / rch - 1 / roh - 1 / rcn);
-//
-//                    if (interaction_energy < -0.5)
-//                    {
-//                        bonds_created += 1;
-//                        new Bond(first.getO(), second.getN(), 0);
-//                    }
-//                }
-//            }
-//        }
-//
-//        return bonds_created;
-//    }
-
+    /**
+     * Calculates interaction energy between specified amino acids
+     * @param amino_acids list of all amino acids in chain
+     * @param i first amino acid
+     * @param j second amino acid
+     * @return interaction energy kcal/mol
+     * @throws StructureException
+     */
     public static double InteractionEnergy(final List<AminoAcid> amino_acids, int i, int j) throws StructureException
     {
         AminoAcid first = amino_acids.get(i);
@@ -102,11 +74,15 @@ public class PdbUtils
         return 0.084 * 332 * (1 / ron + 1 / rch - 1 / roh - 1 / rcn);
     }
 
-//    public static double SymmetricInteractionEnergy(final List<AminoAcid> amino_acids, int i, int j) throws StructureException
-//    {
-//        return Math.min(InteractionEnergy(amino_acids, i, j), InteractionEnergy(amino_acids, j, i));
-//    }
-
+    /**
+     * Assigns helices as secondary structure to appropriate amino acids in whole structure
+     * @param structure structure for assignment
+     * @param n type of helix. n = {3, 4, 5}
+     * @param energy_threshold any energy below threshold supposed to form a hydrogen bond
+     * @param change_direction true if you want to walk through chain in reverse direction
+     * @return amount of helices assigned
+     * @throws StructureException
+     */
     @SuppressWarnings ("unchecked")
     public static int AssignHelices(Structure structure, int n, double energy_threshold, boolean change_direction) throws StructureException
     {
@@ -125,6 +101,14 @@ public class PdbUtils
         return structures_assigned;
     }
 
+    /**
+     * Assigns helices as secondary structure to appropriate amino acids in specified list of amino acids
+     * @param amino_acids list of all amino acids in chain
+     * @param n type of helix. n = {3, 4, 5}
+     * @param energy_threshold any energy below threshold supposed to form a hydrogen bond
+     * @return amount of helices assigned
+     * @throws StructureException
+     */
     public static int HelixAssignment(List<AminoAcid> amino_acids, int n, double energy_threshold) throws StructureException
     {
         int structures_assigned = 0;
@@ -145,6 +129,13 @@ public class PdbUtils
         return structures_assigned;
     }
 
+    /**
+     * Assigns beta sheets as secondary structure to appropriate amino acids in specified list of amino acids
+     * @param amino_acids list of all amino acids in chain
+     * @param energy_threshold any energy below threshold supposed to form a hydrogen bond
+     * @return amount of helices assigned
+     * @throws StructureException
+     */
     private static int AssignBetaSheets(List<AminoAcid> amino_acids, double energy_threshold) throws StructureException
     {
         int structures_assigned = 0;
@@ -167,6 +158,15 @@ public class PdbUtils
         return structures_assigned;
     }
 
+    /**
+     * Assigns parallel beta sheet secondary structure between specified amino acids if they conform dssp criteria for it
+     * @param amino_acids list of all amino acids in chain
+     * @param i first amino acid
+     * @param j second amino acid
+     * @param energy_threshold any energy below threshold supposed to form a hydrogen bond
+     * @return true if specified amino acids form parallel beta sheet
+     * @throws StructureException
+     */
     public static boolean TryAssignParallelBetaSheet(List<AminoAcid> amino_acids, int i, int j, double energy_threshold) throws StructureException
     {
         double interaction11 = InteractionEnergy(amino_acids, i - 1, j);
@@ -188,6 +188,15 @@ public class PdbUtils
         return false;
     }
 
+    /**
+     * Assigns antiparallel beta sheet secondary structure between specified amino acids if they conform dssp criteria for it
+     * @param amino_acids list of all amino acids in chain
+     * @param i first amino acid
+     * @param j second amino acid
+     * @param energy_threshold any energy below threshold supposed to form a hydrogen bond
+     * @return true if specified amino acids form parallel beta sheet
+     * @throws StructureException
+     */
     public static boolean TryAssignAntiparallelBetaSheet(List<AminoAcid> amino_acids, int i, int j, double energy_threshold) throws
             StructureException
     {
@@ -210,6 +219,11 @@ public class PdbUtils
         return false;
     }
 
+    /**
+     * Assigns specified secondary structure to specified amino acid
+     * @param amino_acid amino acid to assign secondary structure
+     * @param structure name of structure
+     */
     public static void AssignSecondaryStructure(AminoAcid amino_acid, String structure)
     {
         Map<String, String> secondary_structure = amino_acid.getSecStruc();
@@ -217,6 +231,13 @@ public class PdbUtils
         amino_acid.setSecStruc(secondary_structure);
     }
 
+    /**
+     * Assigns beta sheets as secondary structure to appropriate amino acids in specified structure
+     * @param structure structure for assignment
+     * @param energy_threshold any energy below threshold supposed to form a hydrogen bond
+     * @return amount of beta sheets assigned
+     * @throws StructureException
+     */
     @SuppressWarnings ("unchecked")
     public static int AssignBetaSheetsToStructure(Structure structure, double energy_threshold) throws StructureException
     {
