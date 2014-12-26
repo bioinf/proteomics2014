@@ -3,6 +3,7 @@
 
 #include "Cluster.h"
 
+#include <cmath>
 #include <string>
 #include <vector>
 #include <map>
