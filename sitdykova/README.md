@@ -1,0 +1,1 @@
+Usage: python progressive_alignment.py <seqs.fasta> <score_matrix> <wpgma|upgma|nj>
