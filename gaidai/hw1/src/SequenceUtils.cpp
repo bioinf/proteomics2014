@@ -125,13 +125,14 @@ double& SequenceUtils::GetMatrixValue(size_t i, size_t j, vector< vector<double>
 	return matrix[max(i, j)][min(i, j)];
 }
 
-std::pair<size_t, size_t> SequenceUtils::GetClosestAlignment(std::vector<std::vector<double>>& pairwise_alignment_matrix,
-															 std::multimap<double, std::pair<size_t, size_t>, std::greater<double>>& pairwise_alignments,
-															 ClusterizationMethod method)
+std::pair<size_t, size_t> SequenceUtils::GetClosestAlignment(std::vector<std::vector<double>>& pairwise_alignment_matrix, 
+															 std::multimap<double, std::pair<size_t, size_t>, std::greater<double>>& pairwise_alignments, 
+															 ClusterizationMethod method, 
+															 std::vector<bool> const& is_clustered)
 {
 	if (method == NJ)
 	{
-		return GetNJClosestAlignment(pairwise_alignment_matrix);
+		return GetNJClosestAlignment(pairwise_alignment_matrix, is_clustered);
 	}
 	else
 	{
@@ -140,7 +141,8 @@ std::pair<size_t, size_t> SequenceUtils::GetClosestAlignment(std::vector<std::ve
 }
 
 // calculates q-matrix and return alignment with min value
-std::pair<size_t, size_t> SequenceUtils::GetNJClosestAlignment(std::vector<std::vector<double>>& pairwise_alignment_matrix)
+std::pair<size_t, size_t> SequenceUtils::GetNJClosestAlignment(std::vector<std::vector<double>>& pairwise_alignment_matrix,
+															   std::vector<bool> const& is_clustered)
 {
 	vector<vector<double>> q_matrix(pairwise_alignment_matrix);
 	pair<size_t, size_t> closest_alignment;
@@ -168,7 +170,7 @@ std::pair<size_t, size_t> SequenceUtils::GetNJClosestAlignment(std::vector<std::
 			}
 			q_matrix[j][i] = pairwise_alignment_matrix[j][i] * (pairwise_alignment_matrix.size() - 2) - substrahend_i - substrahend_j;
 
-			if (q_matrix[j][i] < min_distance)
+			if (q_matrix[j][i] < min_distance && !is_clustered[i] && !is_clustered[j])
 			{
 				min_distance = q_matrix[j][i];
 				closest_alignment = make_pair(j, i);
@@ -220,30 +222,32 @@ std::pair<size_t, std::vector<Cluster>> SequenceUtils::ConstructGuideTree(std::v
 	}
 
 	size_t last_cluster;
-	while (pairwise_alignments.size() > 0)
+
+	while (!IsAllClustered(is_clustered)) //pairwise_alignments.size() > 0
 	{
-		pair<size_t, size_t> closest_alignment = GetClosestAlignment(pairwise_alignments_matrix, pairwise_alignments, method); 
+		pair<size_t, size_t> closest_alignment = GetClosestAlignment(pairwise_alignments_matrix, pairwise_alignments, method, is_clustered); 
 
 		while (is_clustered[closest_alignment.first] || is_clustered[closest_alignment.second])
 		{
 			pairwise_alignments.erase(pairwise_alignments.begin());
 
-			if (pairwise_alignments.size() == 0)
-			{
-				break;
-			}
+			//if (IsAllClustered(is_clustered))
+			//{
+			//	break;
+			//}
 
-			closest_alignment = GetClosestAlignment(pairwise_alignments_matrix, pairwise_alignments, method);
+			closest_alignment = GetClosestAlignment(pairwise_alignments_matrix, pairwise_alignments, method, is_clustered);
 		}
 
-		if (pairwise_alignments.size() == 0)
+		/*if (pairwise_alignments.size() == 0)
 		{
-			break;
-		}
+		break;
+		}*/
 		last_cluster = closest_alignment.first;
 
 		//second number always greater than first so it's declared as clustered
 		is_clustered[closest_alignment.second] = true;
+		//SetInfinity(pairwise_alignments_matrix, closest_alignment.second);
 
 		if (method == NJ)
 		{
@@ -285,7 +289,7 @@ std::pair<size_t, std::vector<Cluster>> SequenceUtils::ConstructGuideTree(std::v
 		clusters[closest_alignment.first].left = clusters.size() - 1;
 		clusters[closest_alignment.first].right = closest_alignment.second;
 		clusters[closest_alignment.first].cluster_size = clusters.back().cluster_size + clusters[closest_alignment.second].cluster_size;
-		clusters[closest_alignment.first].distance = pairwise_alignments.begin()->first;
+		//clusters[closest_alignment.first].distance = pairwise_alignments.begin()->first;
 	}
 
 	return make_pair(last_cluster, clusters);
@@ -455,4 +459,20 @@ AlignmentProfile SequenceUtils::GetClusterProfile(size_t cluster, std::vector<Cl
 	AlignmentProfile left_profile = GetClusterProfile(guide_tree[cluster].left, guide_tree, substitution_matrix);
 	AlignmentProfile right_profile = GetClusterProfile(guide_tree[cluster].right, guide_tree, substitution_matrix);
 	return ProfileAlignment(left_profile, right_profile, substitution_matrix);
+}
+
+bool SequenceUtils::IsAllClustered(vector<bool> const& is_clustered)
+{
+	return count(is_clustered.begin(), is_clustered.end(), false) == 1;
+}
+
+void SequenceUtils::SetInfinity(std::vector<std::vector<double> >& pairwise_alignments_matrix, int cluster)
+{
+	for (int i = 0; i < pairwise_alignments_matrix.size(); ++i)
+	{
+		if (i != cluster)
+		{
+			GetMatrixValue(i, cluster, pairwise_alignments_matrix) = INFINITY;
+		}
+	}
 }

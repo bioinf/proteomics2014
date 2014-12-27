@@ -3,7 +3,6 @@
 
 #include "Cluster.h"
 
-#include <cmath>
 #include <string>
 #include <vector>
 #include <map>
@@ -11,6 +10,7 @@
 #include <functional>
 #include <list>
 #include <iterator>
+#include <cmath>
 
 typedef std::vector<std::map<char, int>> Profile;
 
@@ -49,10 +49,12 @@ private:
 	static std::pair<size_t, std::vector<Cluster>> ConstructGuideTree(std::vector<std::pair<std::string, std::string>> const& sequences,
 									   std::map<char, std::map<char, int>> const& substitution_matrix,
 									   ClusterizationMethod method);
-	static std::pair<size_t, size_t> GetNJClosestAlignment(std::vector<std::vector<double>>& pairwise_alignment_matrix);
+	static std::pair<size_t, size_t> GetNJClosestAlignment(std::vector<std::vector<double>>& pairwise_alignment_matrix,
+														   std::vector<bool> const& is_clustered);
 	static std::pair<size_t, size_t> GetClosestAlignment(std::vector<std::vector<double>>& pairwise_alignment_matrix,
 														 std::multimap<double, std::pair<size_t, size_t>, std::greater<double>>& pairwise_alignments,
-														 ClusterizationMethod method);
+														 ClusterizationMethod method,
+														 std::vector<bool> const& is_clustered);
 	static void RecalculateDistanceWPGMA(std::vector<bool> const& is_clustered,
 										 std::vector<Cluster> const& clusters,
 										 size_t cluster1,
@@ -69,6 +71,8 @@ private:
 	static int AlignProfileColumns(std::map<char, int> const& column1, std::map<char, int> const& column2,
 									  std::map<char, std::map<char, int>> const& substitution_matrix);
 	static std::map<char, int> MergeProfileColumns(std::map<char, int>& column1, std::map<char, int>& column2);
+	static bool IsAllClustered(std::vector<bool> const& is_clustered);
+	static void SetInfinity(std::vector <std::vector<double> >& pairwise_alignments_matrix, int cluster);
 };
 
 #endif // SequenceUtils_h__
