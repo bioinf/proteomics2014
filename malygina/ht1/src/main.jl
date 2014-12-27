@@ -54,12 +54,19 @@ function main()
     output_file = parsed_args["output-file"]
     clustering = parsed_args["clustering"]
     score_matrix_file = parsed_args["score-matrix"]
-    ProfileAligner.setScoringMatrix(readMatrix(score_matrix_file))
+    score_matrix = readMatrix(score_matrix_file)
+    println("Score matrix loaded...")
+
+    ProfileAligner.setScoringMatrix(score_matrix)
     fasta_sequences = readSequences(input_file)
+    println("FASTA sequences loaded...")
     seq = strToProfiles( fasta_sequences)
+    println("Sequences converted to profiles successfully, starting tree construction...")
     result = (clustering == "N" ? NeighbourJoining(seq, scoreFunc, mergeFunc) :
       clustering == "W" ? WPGMA(seq, scoreFunc, mergeFunc) : UPGMA(seq, scoreFunc, mergeFunc) )
+    println("Tree constructed, writing to output_file...")
     writeSequences(output_file, getstrings(result))
+    println("All done, go and do smthng else")
 end
 
 main()
