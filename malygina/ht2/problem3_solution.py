@@ -111,11 +111,10 @@ def comp_all(all_coordinates, target_coordinate, epsilon = 0.002, max_iterations
                 continue
             cost, sint = b/sqrt(b * b + c * c), c/sqrt(b * b + c * c)
             for j in range(i + 1, len(all_coordinates)):
-                before = all_coordinates[j]
                 all_coordinates[j] = rotate(theta, all_coordinates[i], all_coordinates[j], cost, sint)
         print(
             "N-terminal to C-terminal: iteration {0} passed,\n \
-            difference in target coordinates and current coordinates for last atom is {1}\
+difference in target coordinates and current coordinates for last atom is {1}\
             ".format(
                 current_iteration,
                 length(vect(all_coordinates[-1], target_coordinate))
@@ -154,4 +153,5 @@ if __name__ == "__main__":
         exit(1)
     else:
         write_coordinates(sys.argv[1], sys.argv[3], result)
-        print("Good news, everyone! We've got a very special delivery today. \nIt's a brand new PDB file named " + sys.argv[3])
+        print("Good news, everyone! We've got a very special delivery today. \n\
+                It's a brand new PDB file named " + sys.argv[3])

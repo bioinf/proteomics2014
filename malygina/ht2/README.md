@@ -16,4 +16,4 @@ Script *problem3_solution.py* is written in Python 2.7, however, this is not act
 
 It runs once from N-terminal to C-terminal backbone atom. If target coordinates and current coordinates are still far from each other, calls script once again, untill epsilon=0.002 is reached or max_iterations=1000 is exceeded.
 
-Currently problem 3 solution was fixed, and ready for checking.
+Currently problem 3 solution is fixed, and ready for checking.
