@@ -57,7 +57,7 @@ def get_rotation_axis(p1, p2, current, target):
     ri = length(ortho)
     if ri == 0:
         axis = cross(vect(o, target), theta)
-        if (length(axis) == 0):
+        if (length(axis) == 0 or length(cross(vect(o, current), theta)) == 0):
             return [0, 0, 0]
         return unit(axis)
     r = unit(ortho)
@@ -95,23 +95,43 @@ def compute_s_coeffs(theta, p1, current_coordinate, target_coordinate):
                 if dot(ri, ri) != 0.0
             ], (0,0,0)
     )
-def comp_all(all_coordinates, target_coordinate):
-    for i in range(len(all_coordinates) - 1):
-        current_coordinate = all_coordinates[-1]
-        if current_coordinate == target_coordinate: break
-        theta = get_rotation_axis(all_coordinates[i], all_coordinates[i + 1], current_coordinate, target_coordinate)
-        if dot(theta, theta) == 0:
-            continue
-        (a, b, c) = compute_s_coeffs(theta, all_coordinates[i], current_coordinate, target_coordinate)
-        if b * b + c * c == 0:
-            continue
-        cost, sint = b/sqrt(b * b + c * c), c/sqrt(b * b + c * c)
-        for j in range(i + 1, len(all_coordinates)):
-            before = all_coordinates[j]
-            all_coordinates[j] = rotate(theta, all_coordinates[i], all_coordinates[j], cost, sint)
+def comp_all(all_coordinates, target_coordinate, epsilon = 0.002, max_iterations = 1000):
+    current_iteration = 0
+    while (1):
+        current_iteration += 1
+        for i in range(len(all_coordinates) - 1):
+            current_coordinate = all_coordinates[-1]
+            if current_coordinate == target_coordinate:
+                break
+            theta = get_rotation_axis(all_coordinates[i], all_coordinates[i + 1], current_coordinate, target_coordinate)
+            if dot(theta, theta) == 0:
+                continue
+            (a, b, c) = compute_s_coeffs(theta, all_coordinates[i], current_coordinate, target_coordinate)
+            if b * b + c * c == 0:
+                continue
+            cost, sint = b/sqrt(b * b + c * c), c/sqrt(b * b + c * c)
+            for j in range(i + 1, len(all_coordinates)):
+                before = all_coordinates[j]
+                all_coordinates[j] = rotate(theta, all_coordinates[i], all_coordinates[j], cost, sint)
+        print(
+            "N-terminal to C-terminal: iteration {0} passed,\n \
+            difference in target coordinates and current coordinates for last atom is {1}\
+            ".format(
+                current_iteration,
+                length(vect(all_coordinates[-1], target_coordinate))
+            )
+        )
+        if (current_iteration >= max_iterations):
+            print("Number of iterations exceeds max_iterations constant")
+            break
+        if (length(vect(all_coordinates[-1], target_coordinate)) <= epsilon):
+            print("Number of iterations is less than epsilon={0}".format(epsilon))
+            break
     return all_coordinates
 
-def show_help(): print("\'call me maybe' format: script.py <input_pdb> [0.1,2.0,2.0] <output_pdb>\n    second parameter - target coordinates of last point\n")
+def show_help():
+    print("\'call me maybe' format: script.py <input_pdb> [0.1,2.0,2.0] <output_pdb>\n\
+            \tsecond parameter - target coordinates of last point\n")
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
