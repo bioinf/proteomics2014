@@ -38,3 +38,26 @@ QARTMTCIIK**********************************************************************
 ********************************************************************************CKLKWLRDPS**********
 ******************************************************************************************IMLQERNQIK
 ```
+
+
+Дима:
+Паша, проверь еще раз, у меня все работает.
+Может проблема с форматом матрицы, все соп. файлы приложил
+
+C:\Users\Dmitrii\Desktop\proteomics2014\meleshko\hw1>make
+g++ -std=c++11 -O2 cluster.cpp fasta.cpp GuideTree.cpp -o GuideTree
+
+C:\Users\Dmitrii\Desktop\proteomics2014\meleshko\hw1>GuideTree.exe input.txt mat
+rix.txt NJ
+
+C:\Users\Dmitrii\Desktop\proteomics2014\meleshko\hw1>cat output.txt
+LWYVRM***H***M***Y******R********
+M*Y*KK***H***S***Y******QTD******
+S*****S**D***E***ES***L*A**PY****
+Q*****N**H***H***VG***N*G**PA****
+Q********A***R**TM*TC*IIK********
+P******VIKL**DA*TW******R********
+C********K*L*K***W****L*R****DPS*
+S********H***Q***W***YL*K****IKW*
+I******M*L**QE*RNQ****I*K********
+F******E*H**CE**NF****V*R*******C
