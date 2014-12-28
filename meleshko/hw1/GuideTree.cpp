@@ -303,7 +303,7 @@ void ParseNCBIMatrix(ScoringMatrix& matrix, std::string filename)
   {
     std::getline(matrixInput, str);
   } 
-  while (str[0] == '#');
+  while (str[0] == '#' || str == "");
   std::vector<char> supmas = split(str, ' ');
   for (int i = 0; i < supmas.size(); ++i)
   {
