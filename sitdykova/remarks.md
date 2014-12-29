@@ -8,3 +8,5 @@ ImportError: No module named 'readers'
 ```
 
 В PyPi модуля с таким именем нет.
+
+Мой косяк, добавила этот файл.
