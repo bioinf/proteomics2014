@@ -7,7 +7,7 @@ void Matrix::Read(std::ifstream &fin) {
     while (!fin.eof()) {
         std::vector <std::string> fields;
         fin.getline(buffer, 1024);
-        if (buffer[0] == '#') {
+        if (buffer[0] == '#' || strlen(buffer) == 0) {
             continue;
         }
         if (first) {
