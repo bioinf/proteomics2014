@@ -363,9 +363,14 @@ void remove_dists(NodeNum node, map<pair<NodeNum, NodeNum>, double> & dist) {
 }
 
 void remove_from_Q(NodeNum node, map<pair<NodeNum, NodeNum>, double> & Q) {
-    for (auto node_pair : Q) {
-        if (node_pair.first.first == node || node_pair.first.second == node) {
-            Q.erase(node_pair.first);
+    map<pair<NodeNum, NodeNum>, double>::iterator it = Q.begin();
+    while (it != Q.end()) {
+        if ((it->first).first == node || (it->first).second == node) {
+           map<pair<NodeNum, NodeNum>, double>::iterator toErase = it;
+           ++it;
+           Q.erase(toErase);
+        } else {
+           ++it;
         }
     }
 }
@@ -402,6 +407,7 @@ double get_dist(map<pair<NodeNum, NodeNum>, double> & dist,
 void build_nj_tree(map<pair<NodeNum, NodeNum>, double> & dist, 
                    map<pair<NodeNum, NodeNum>, double> & Q, int seq_count, 
                    Tree * & tree) {
+
     // construct initial tree and node list
     set<NodeNum> actual_nodes;
     for (NodeNum i = 0; i < seq_count; ++i) {
@@ -549,24 +555,26 @@ such file). Exit.");
     }
     alignment_matrix.resize(AA_number);
     size_t line_counter = 0;
-    while (!matrix_infile.eof()) {
-        getline(matrix_infile, tmp); // read first line
-        if (matrix_infile.eof()) {
-            break;
-        }
+    if (!matrix_infile.eof()) {
+        getline(matrix_infile, tmp);
         while (tmp[0] == '#' || tmp[0] == ' ') { 
             // it meets NCBI format for alignment scoring matrices                                                        
             getline(matrix_infile, tmp); // read lines while they begin with #
                                          // or with ' ' (the head of the table)
         }
-        ++line_counter;
         double score;
-        string aa_abbr;
-        stringstream tmp_stream(tmp);
-        tmp_stream >> aa_abbr; // just is read, isn't used
-        for (size_t i = 0; i < AA_number; ++i) {
-            tmp_stream >> score;
-            alignment_matrix[line_counter - 1].push_back(score);
+        string aa_abbr; // AA abbreviation each matrix line begins with 
+        for (size_t j = 0; j < AA_number; ++j) {
+            stringstream tmp_stream(tmp);
+            tmp_stream >> aa_abbr; // just is read, isn't used
+            for (size_t i = 0; i < AA_number; ++i) {
+                tmp_stream >> score;
+                alignment_matrix[line_counter].push_back(score);
+            }
+            if (j < AA_number - 1) {
+                getline(matrix_infile, tmp);
+                ++line_counter;
+            }
         }
     }
 
@@ -643,6 +651,7 @@ int main(int argc, char ** argv) {
     vector<string> str;
     vector<string> seq_ids;
     vector<vector<int>> alignment_matrix;
+
     if (read_input(input_fasta_file, str, seq_ids, matrix_file, 
         alignment_matrix)) {
 
