@@ -1,0 +1,18 @@
+Description:
+
+	Cyclic Coordinate Descent for Loop Closure Problem
+	
+	Input: pdb file and target coordinates of terminal C
+
+	Output: new pdb file, which contain fixed atom coordianates
+
+Requirements:
+
+	Biopython
+
+Usage:
+
+	python loop_closure_problem.py <input_pdb_file> x y z
+
+	where x, y, z -- target coordinates of terminal C
+	
